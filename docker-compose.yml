@@ -1,11 +1,22 @@
-version: '3.8'
-
 services:
   bot:
     build: .
     container_name: itoq_advokat_bot
     restart: always
-    volumes:
-      - .:/app
     env_file:
-      - .env 
+      - .env
+    volumes:
+      - ./logs:/app/logs
+      - ./documents:/app/documents
+    networks:
+      - bot_network
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+
+networks:
+  bot_network:
+    driver: bridge 

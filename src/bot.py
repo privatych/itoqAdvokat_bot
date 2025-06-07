@@ -5,6 +5,7 @@ import sys
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import BotCommand
+from aiogram.client.default import DefaultBotProperties
 
 from config import settings
 from handlers.common import router as common_router
@@ -17,7 +18,10 @@ from utils.logger import setup_logger
 logger = setup_logger()
 
 # Глобальные переменные для управления состоянием бота
-bot = Bot(token=settings.BOT_TOKEN, parse_mode="HTML")
+bot = Bot(
+    token=settings.BOT_TOKEN,
+    default=DefaultBotProperties(parse_mode="HTML")
+)
 storage = MemoryStorage()
 dp = Dispatcher(storage=storage)
 
