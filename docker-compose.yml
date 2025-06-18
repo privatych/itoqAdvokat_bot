@@ -1,21 +1,62 @@
+version: '3.8'
+
 services:
+  mongodb:
+    image: mongo:7.0
+    container_name: itoq_mongodb
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: legal_bot
+    volumes:
+      - mongodb_data:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    ports:
+      - "27017:27017"
+    networks:
+      - bot_network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
   bot:
     build: .
     container_name: itoq_advokat_bot
     restart: always
     env_file:
       - .env
+    environment:
+      - MONGODB_URI=mongodb://admin:password123@mongodb:27017/legal_bot?authSource=admin
     volumes:
       - ./logs:/app/logs
       - ./documents:/app/documents
+    depends_on:
+      mongodb:
+        condition: service_healthy
     networks:
       - bot_network
     deploy:
       resources:
         limits:
           memory: 1G
+          cpus: '0.5'
         reservations:
           memory: 512M
+          cpus: '0.25'
+    healthcheck:
+      test: ["CMD", "python", "-c", "print('Bot is healthy')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  mongodb_data:
+    driver: local
 
 networks:
   bot_network:

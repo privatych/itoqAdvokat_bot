@@ -1,0 +1,41 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Deploy to server
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.SSH_KEY }}
+        port: ${{ secrets.PORT }}
+        script: |
+          cd ${{ secrets.DEPLOY_PATH }}
+          git pull origin main
+          docker-compose down
+          docker-compose up -d --build
+          docker system prune -f
+          
+    - name: Health check
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.SSH_KEY }}
+        port: ${{ secrets.PORT }}
+        script: |
+          cd ${{ secrets.DEPLOY_PATH }}
+          sleep 30
+          docker-compose ps
+          docker-compose logs --tail=20 bot 
